@@ -2,6 +2,13 @@
       :author "Joshua Greenberg"}
   joshua-g.sha-1)
 
+;; user> (->> (map int "The quick brown fox jumps over the lazy dog")
+;;            sha-1
+;;            (map (partial format "%02x"))
+;;            (apply str))
+;; "2fd4e1c67a2d28fced849ee1bb76e7391b93eb12"
+
+
 (defn sha-1 [byte-coll]
   {:pre [(coll? byte-coll)
          (every? integer? byte-coll)]}
