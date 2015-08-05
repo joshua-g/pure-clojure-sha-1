@@ -54,16 +54,17 @@
            :else        [(bit-xor b c d)
                          0xCA62C1D6]))
 
-        compress (fn [state next-chunk]
-                   (->> [state (range 0 80)]
-                        (apply reduce
-                               (fn [[a b c d e] i]
-                                 (let [[f k] (bcd-transform i b c d)
-                                       temp (trunc-to-32-bits
-                                             (+ (leftrotate 5 a) f e k (next-chunk i)))]
-                                   [temp a (leftrotate 30 b) c d])))
-                        (map + state)
-                        (map trunc-to-32-bits)))
+        compress
+        (fn [state next-chunk]
+          (->> [state (range 0 80)]
+               (apply reduce
+                      (fn [[a b c d e] i]
+                        (let [[f k] (bcd-transform i b c d)
+                              temp (trunc-to-32-bits
+                                    (+ (leftrotate 5 a) f e k (next-chunk i)))]
+                          [temp a (leftrotate 30 b) c d])))
+               (map + state)
+               (map trunc-to-32-bits)))
 
         byte-count (count byte-coll)
         bit-count (* 8 byte-count)
