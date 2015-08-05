@@ -39,38 +39,31 @@
                              (leftrotate 1)
                              (conj chk))))))
 
-        bcd-transforms
-        {0  (fn [b c d]
-              [(bit-or (bit-and b c)
-                       (bit-and (bit-not b) d))
-               0x5A827999])
-         20 (fn [b c d]
-              [(bit-xor b c d)
-               0x6ED9EBA1])
-         40 (fn [b c d]
-              [(bit-or (bit-and b c)
-                       (bit-and c d)
-                       (bit-and d b))
-               0x8F1BBCDC])
-         60 (fn [b c d]
-              [(bit-xor b c d)
-               0xCA62C1D6])}
-
-        apply-bcd-transform
-        (fn [i & bcd]
-          (-> (- i (mod i 20))
-              bcd-transforms
-              (apply bcd)))
+        bcd-transform
+        (fn [i b c d]
+          (cond
+           (<= 0 i 19)  [(bit-or (bit-and b c)
+                                 (bit-and (bit-not b) d))
+                         0x5A827999]
+           (<= 20 i 39) [(bit-xor b c d)
+                         0x6ED9EBA1]
+           (<= 40 i 59) [(bit-or (bit-and b c)
+                                 (bit-and c d)
+                                 (bit-and d b))
+                         0x8F1BBCDC]
+           :else        [(bit-xor b c d)
+                         0xCA62C1D6]))
 
         compress (fn [state next-chunk]
                    (->> [state (range 0 80)]
                         (apply reduce
                                (fn [[a b c d e] i]
-                                 (let [[f k] (apply-bcd-transform i b c d)
+                                 (let [[f k] (bcd-transform i b c d)
                                        temp (trunc-to-32-bits
                                              (+ (leftrotate 5 a) f e k (next-chunk i)))]
                                    [temp a (leftrotate 30 b) c d])))
-                        (map + state)))
+                        (map + state)
+                        (map trunc-to-32-bits)))
 
         byte-count (count byte-coll)
         bit-count (* 8 byte-count)
